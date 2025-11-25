@@ -2,6 +2,8 @@
 
 A tiny helper plugin for WordPress + Polylang.
 
+SEO: A lightweight WordPress plugin that adds Polylang language-wise post counts for Posts, Products, Pages, and custom post types. Supports WooCommerce and multisite.
+
 It shows **per-language post counts** for all post types that are enabled in Polylang's “Custom post types and Taxonomies” settings, directly on the admin list screens (Posts, Products, Templates, etc.).
 
 The plugin **does not modify** the default WordPress list table counters (`All (1176)`, `Published (800)`, `Draft (2)` …).  
@@ -28,6 +30,8 @@ Instead, it appends a compact, non-clickable “Languages: sv (5) | en (1)” it
 1. Ensure your post type is enabled for translation in **Languages → Settings → Custom post types and Taxonomies**.
 2. Open the admin list table for that post type (e.g., Posts, Pages, Products).
 3. The language counts appear next to the standard counters as “Languages: xx (published) | yy (published)”.
+
+Keywords: wordpress, polylang, multilingual, post count, product count, admin tools, translation
 
 ## Installation
 
