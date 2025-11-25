@@ -3,7 +3,7 @@
  * Plugin Name:       Polylang Language Counts
  * Description:       Shows per-language post counts for all Polylang-enabled post types in the admin list screens without changing the default WordPress counters.
  * Version:           1.0.0
- * Author:            Your Name
+ * Author:            Prakhar Kant Tripathi
  * Text Domain:       polylang-language-counts
  * Requires at least: 5.0
  * Requires PHP:      7.4
@@ -20,7 +20,7 @@ add_action( 'load-edit.php', 'pllc_setup_language_counts_for_screen' );
 
 function pllc_setup_language_counts_for_screen() {
 	// Polylang not active? Do nothing.
-	if ( ! function_exists( 'pll_get_post_types' ) || ! function_exists( 'pll_the_languages' ) || ! function_exists( 'pll_count_posts' ) ) {
+	if ( ! function_exists( 'pll_the_languages' ) || ! function_exists( 'pll_count_posts' ) || ! function_exists( 'PLL' ) ) {
 		return;
 	}
 
@@ -30,25 +30,22 @@ function pllc_setup_language_counts_for_screen() {
 	}
 
 	$post_type     = $screen->post_type;
-	$pll_posttypes = pll_get_post_types( array( 'status' => 'all' ) );
-
-	// Only run for post types enabled in Polylang settings.
-	if ( empty( $pll_posttypes ) || ! in_array( $post_type, $pll_posttypes, true ) ) {
+	if ( ! pllc_is_translated_post_type( $post_type ) ) {
 		return;
 	}
 
-	// Compute counts once and then print as an admin notice.
-	$counts = pllc_get_language_counts_for_post_type( $post_type );
-
-	if ( ! empty( $counts ) ) {
-		// Pass data via closure.
-		add_action(
-			'all_admin_notices',
-			function () use ( $counts, $post_type ) {
-				pllc_render_language_counts_notice( $counts, $post_type );
+	$hook = 'views_edit-' . $post_type;
+	add_filter(
+		$hook,
+		function ( $views ) use ( $post_type ) {
+			$counts = pllc_get_language_counts_for_post_type( $post_type );
+			if ( empty( $counts ) ) {
+				return $views;
 			}
-		);
-	}
+
+			return pllc_inject_language_counts_into_views( $views, $counts );
+		}
+	);
 }
 
 /**
@@ -59,23 +56,31 @@ function pllc_setup_language_counts_for_screen() {
  * @return array[]
  */
 function pllc_get_language_counts_for_post_type( $post_type ) {
-	// raw => 1 returns an array of language data keyed by slug.
-	$languages = pll_the_languages(
-		array(
-			'raw'              => 1,
-			'hide_if_empty'    => 0,
-			'hide_if_no_posts' => 0,
-		)
-	);
-
+	$languages = pllc_get_languages();
 	if ( empty( $languages ) || ! is_array( $languages ) ) {
 		return array();
 	}
 
 	$counts = array();
 
-	foreach ( $languages as $slug => $lang ) {
-		$name = isset( $lang['name'] ) ? $lang['name'] : ucfirst( $slug );
+	foreach ( $languages as $lang ) {
+		$slug = '';
+		$name = '';
+
+		if ( is_object( $lang ) ) {
+			$slug = isset( $lang->slug ) ? $lang->slug : '';
+			$name = isset( $lang->name ) ? $lang->name : $slug;
+		} elseif ( is_array( $lang ) ) {
+			$slug = isset( $lang['slug'] ) ? $lang['slug'] : '';
+			$name = isset( $lang['name'] ) ? $lang['name'] : $slug;
+		} else {
+			$slug = (string) $lang;
+			$name = $slug;
+		}
+
+		if ( '' === $slug ) {
+			continue;
+		}
 
 		// Count all statuses for this language/post type.
 		$count_all = pll_count_posts(
@@ -106,43 +111,120 @@ function pllc_get_language_counts_for_post_type( $post_type ) {
 }
 
 /**
- * Render the notice box with language-wise counts.
+ * Get languages in admin (pll_the_languages() is frontend-only).
  *
- * @param array  $counts
- * @param string $post_type
+ * @return array Array of PLL_Language objects or language slugs.
  */
-function pllc_render_language_counts_notice( $counts, $post_type ) {
-	if ( empty( $counts ) ) {
-		return;
+function pllc_get_languages() {
+	// Preferred: use the model to get PLL_Language objects.
+	if ( function_exists( 'PLL' ) && is_object( PLL()->model ) ) {
+		$languages = PLL()->model->get_languages_list(
+			array(
+				'hide_empty'   => false,
+				'hide_default' => false,
+			)
+		);
+
+		if ( is_array( $languages ) ) {
+			return $languages;
+		}
 	}
 
-	$post_type_obj = get_post_type_object( $post_type );
-	$post_type_label = $post_type_obj ? $post_type_obj->labels->name : $post_type;
+	// Fallback for older Polylang versions: just grab slugs.
+	if ( function_exists( 'pll_languages_list' ) ) {
+		$slugs = pll_languages_list( array( 'hide_empty' => false, 'hide_default' => false ) );
+		if ( is_array( $slugs ) ) {
+			return array_map(
+				function ( $slug ) {
+					return array(
+						'slug' => $slug,
+						'name' => strtoupper( $slug ),
+					);
+				},
+				$slugs
+			);
+		}
+	}
 
-	?>
-	<div class="notice notice-info is-dismissible">
-		<p><strong><?php echo esc_html( sprintf( __( 'Language counts for %s (Polylang)', 'polylang-language-counts' ), $post_type_label ) ); ?></strong></p>
-		<table class="widefat striped" style="max-width: 520px; margin-top: 4px;">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Language', 'polylang-language-counts' ); ?></th>
-					<th><?php esc_html_e( 'Published', 'polylang-language-counts' ); ?></th>
-					<th><?php esc_html_e( 'All statuses', 'polylang-language-counts' ); ?></th>
-				</tr>
-			</thead>
-			<tbody>
-			<?php foreach ( $counts as $row ) : ?>
-				<tr>
-					<td><?php echo esc_html( $row['name'] ); ?> (<?php echo esc_html( $row['slug'] ); ?>)</td>
-					<td><?php echo esc_html( number_format_i18n( $row['count_published'] ) ); ?></td>
-					<td><?php echo esc_html( number_format_i18n( $row['count_all'] ) ); ?></td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-		</table>
-		<p style="margin-top: 6px; font-size: 11px; opacity: .8;">
-			<?php esc_html_e( 'Note: Default WordPress counters (All, Published, Draft…) remain unchanged; this box only adds Polylang language-wise counts.', 'polylang-language-counts' ); ?>
-		</p>
-	</div>
-	<?php
+	return array();
+}
+
+/**
+ * Check if a post type is translated in Polylang settings.
+ *
+ * @param string $post_type
+ *
+ * @return bool
+ */
+function pllc_is_translated_post_type( $post_type ) {
+	$translated = pllc_get_translated_post_types();
+	return ! empty( $translated ) && in_array( $post_type, $translated, true );
+}
+
+/**
+ * Return all post types that are translated in Polylang settings.
+ *
+ * @return string[]
+ */
+function pllc_get_translated_post_types() {
+	// Preferred API for Polylang 3.7+.
+	if ( function_exists( 'PLL' ) && is_object( PLL()->model ) ) {
+		$post_types = PLL()->model->get_translated_post_types();
+		if ( is_array( $post_types ) && ! empty( $post_types ) ) {
+			return $post_types;
+		}
+	}
+
+	// Fallback: use filter with Polylang defaults (post, page, wp_block).
+	$defaults  = array( 'post' => 'post', 'page' => 'page', 'wp_block' => 'wp_block' );
+	$post_types = apply_filters( 'pll_get_post_types', $defaults, false );
+
+	if ( is_array( $post_types ) ) {
+		$post_types = array_values( $post_types );
+		return $post_types;
+	}
+
+	return array();
+}
+
+/**
+ * Inject language counts next to the default WP counters (views row).
+ *
+ * @param array $views
+ * @param array $counts
+ * @return array
+ */
+function pllc_inject_language_counts_into_views( $views, $counts ) {
+	if ( empty( $counts ) || ! is_array( $counts ) ) {
+		return $views;
+	}
+
+	$bits = array();
+
+	foreach ( $counts as $row ) {
+		if ( empty( $row['slug'] ) ) {
+			continue;
+		}
+
+		$label = $row['slug'];
+		// Prioritize short code to keep it compact.
+		if ( ! empty( $row['name'] ) && strlen( $row['name'] ) <= 3 ) {
+			$label = $row['name'];
+		}
+
+		$bits[] = sprintf(
+			'%s (%s)',
+			esc_html( $label ),
+			esc_html( number_format_i18n( $row['count_published'] ) )
+		);
+	}
+
+	if ( empty( $bits ) ) {
+		return $views;
+	}
+
+	// Add a non-clickable item to the views row.
+	$views['pllc-language-counts'] = '<span class="pllc-language-counts" style="font-weight:600; color:#2271b1;">' . esc_html__( 'Languages:', 'polylang-language-counts' ) . ' ' . implode( ' | ', $bits ) . '</span>';
+
+	return $views;
 }
