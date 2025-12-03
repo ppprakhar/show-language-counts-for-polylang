@@ -1,4 +1,4 @@
-=== Polylang Language Counts ===
+=== Show Language Counts for Polylang ===
 Contributors: ppprakhar
 Donate link: https://github.com/ppprakhar
 Tags: polylang, multilingual, language, admin tools, post count, product count, woocommerce
@@ -9,7 +9,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Adds language-wise post, product and custom-post-type counts for all Polylang-enabled content types in the WordPress admin. Does not modify the default WordPress counters.
+Adds language-wise post, product and custom-post-type counts for all Polylang-enabled content types in the WordPress admin. Does not modify the default WordPress counters. Unaffiliated helper for Polylang users.
 
 == Description ==
 
@@ -61,12 +61,15 @@ Store owners and content editors often need to know:
 
 This plugin solves that without modifying WP core behavior.
 
+Polylang is a registered trademark of WP SYNTEX.  
+This plugin is an independent addon and is not affiliated with or endorsed by WP SYNTEX or the Polylang plugin.
+
 == Installation ==
 
 1. Install Polylang (required)
 2. Upload the plugin folder to:
-   `/wp-content/plugins/polylang-language-counts`
-3. Activate **Polylang Language Counts** via *Plugins → Installed Plugins*
+   `/wp-content/plugins/show-language-counts-for-polylang`
+3. Activate **Show Language Counts for Polylang** via *Plugins → Installed Plugins*
 4. Go to any post type list (Posts, Products, etc.)
 5. View your new language-wise post counts
 

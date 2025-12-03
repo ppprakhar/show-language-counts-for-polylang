@@ -1,6 +1,6 @@
-# Polylang Language Counts
+# Show Language Counts for Polylang
 
-A tiny helper plugin for WordPress + Polylang.
+A tiny helper plugin for WordPress + Polylang (unofficial helper).
 
 SEO: A lightweight WordPress plugin that adds Polylang language-wise post counts for Posts, Products, Pages, and custom post types. Supports WooCommerce and multisite.
 
@@ -38,4 +38,4 @@ Keywords: wordpress, polylang, multilingual, post count, product count, admin to
 1. Download or clone this repository into:
 
    ```text
-   wp-content/plugins/polylang-language-counts
+   wp-content/plugins/show-language-counts-for-polylang
