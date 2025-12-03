@@ -179,7 +179,8 @@ function pllc_get_translated_post_types() {
 
 	// Fallback: use filter with Polylang defaults (post, page, wp_block).
 	$defaults  = array( 'post' => 'post', 'page' => 'page', 'wp_block' => 'wp_block' );
-	$post_types = apply_filters( 'pll_get_post_types', $defaults, false );
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using official Polylang filter.
+		$post_types = apply_filters( 'pll_get_post_types', $defaults, false );
 
 	if ( is_array( $post_types ) ) {
 		$post_types = array_values( $post_types );
@@ -254,7 +255,7 @@ function pllc_register_missing_translations_page() {
  */
 function pllc_render_missing_translations_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( __( 'Permission denied.', 'show-language-counts-for-polylang' ) );
+		wp_die( esc_html__( 'Permission denied.', 'show-language-counts-for-polylang' ) );
 	}
 
 	$post_types = pllc_get_translated_post_types();
@@ -302,9 +303,10 @@ function pllc_render_missing_translations_page() {
 			}
 		}
 
-		if ( $changed > 0 ) {
-			$messages[] = sprintf( _n( '%d item updated.', '%d items updated.', $changed, 'show-language-counts-for-polylang' ), $changed );
-		}
+			if ( $changed > 0 ) {
+				/* translators: %d: number of items updated */
+				$messages[] = sprintf( _n( '%d item updated.', '%d items updated.', $changed, 'show-language-counts-for-polylang' ), $changed );
+			}
 	}
 
 	$results = array();
@@ -441,15 +443,15 @@ function pllc_render_missing_translations_page() {
  */
 function pllc_scan_missing_translations( $post_type, $target_lang, $base_lang = '' ) {
 	$ids = get_posts(
-		array(
-			'post_type'        => $post_type,
-			'post_status'      => 'any',
-			'posts_per_page'   => -1,
-			'fields'           => 'ids',
-			'lang'             => 'all',
-			'suppress_filters' => true,
-		)
-	);
+			array(
+				'post_type'        => $post_type,
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'lang'             => 'all',
+				'suppress_filters' => false,
+			)
+		);
 
 	$rows = array();
 	foreach ( $ids as $id ) {

@@ -1,15 +1,15 @@
 === Show Language Counts for Polylang ===
 Contributors: ppprakhar
 Donate link: https://github.com/ppprakhar
-Tags: polylang, multilingual, language, admin tools, post count, product count, woocommerce
+Tags: polylang, multilingual, post count, admin tools, woocommerce
 Requires at least: 5.0
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Adds language-wise post, product and custom-post-type counts for all Polylang-enabled content types in the WordPress admin. Does not modify the default WordPress counters. Unaffiliated helper for Polylang users.
+Adds per-language counts for Polylang-enabled posts and products in the admin without changing default counters. Unofficial, unaffiliated helper.
 
 == Description ==
 
